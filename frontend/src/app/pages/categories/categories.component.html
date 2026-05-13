@@ -1,0 +1,21 @@
+<!-- Categories page placeholder -->
+<section class="page">
+  <div class="container">
+    <h1 class="page-title">Categorias</h1>
+    <p class="page-subtitle">
+      Organizacao por categoria ajuda a navegar e filtrar receitas rapidamente.
+    </p>
+
+    <div class="card">
+      <h2 class="card-title">Categorias exemplo</h2>
+      <div class="category-list">
+        <span
+          *ngFor="let category of sampleCategories; trackBy: trackByCategory"
+          class="category-pill"
+        >
+          {{ category }}
+        </span>
+      </div>
+    </div>
+  </div>
+</section>

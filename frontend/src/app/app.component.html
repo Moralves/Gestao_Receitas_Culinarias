@@ -1,1 +1,36 @@
-<router-outlet></router-outlet>
+<!-- Global application shell -->
+<div class="app-shell">
+  <!-- Header with brand and navigation -->
+  <header class="app-header">
+    <div class="container app-header-content">
+      <div class="app-brand">
+        <span class="app-brand-title">{{ brandName }}</span>
+        <span class="app-brand-subtitle">Culinarias</span>
+      </div>
+
+      <nav class="app-nav" aria-label="Navegacao principal">
+        <a
+          *ngFor="let link of navLinks; trackBy: trackByPath"
+          [routerLink]="link.path"
+          routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+        >
+          {{ link.label }}
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Routed content -->
+  <main class="app-main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="container app-footer-content">
+      <span>Gestao de Receitas Culinarias</span>
+      <span class="app-footer-note">Frontend academico para estudo.</span>
+    </div>
+  </footer>
+</div>

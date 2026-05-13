@@ -1,0 +1,18 @@
+<!-- Recipes page placeholder -->
+<section class="page">
+  <div class="container">
+    <h1 class="page-title">Receitas</h1>
+    <p class="page-subtitle">
+      Esta area recebera a listagem completa e os recursos de gestao de receitas.
+    </p>
+
+    <div class="card placeholder-card">
+      <h2 class="card-title">Proximas entregas</h2>
+      <ul class="placeholder-list">
+        <li *ngFor="let item of nextDeliveries; trackBy: trackByItem">
+          {{ item }}
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>

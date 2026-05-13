@@ -1,0 +1,42 @@
+<!-- Hero section -->
+<section class="page hero">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <p class="hero-eyebrow">Projeto academico</p>
+      <h1 class="page-title">Gestao de receitas de forma simples e moderna.</h1>
+      <p class="page-subtitle">
+        Base de estudo para construir uma aplicacao profissional, com foco em clareza visual
+        e organizacao do conteudo culinario.
+      </p>
+      <div class="hero-actions">
+        <a class="primary-action" routerLink="/receitas">Ver receitas</a>
+        <a class="secondary-action" routerLink="/categorias">Explorar categorias</a>
+      </div>
+    </div>
+
+    <div class="hero-panel">
+      <div class="hero-panel-card">
+        <p class="hero-panel-title">Primeira fase entregue</p>
+        <p class="hero-panel-text">
+          Layout base, navegacao e identidade visual pronta para evoluir as funcionalidades.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Highlights -->
+<section class="page">
+  <div class="container">
+    <h2 class="section-title">O que esta sendo construido</h2>
+    <div class="card-grid">
+      <article
+        *ngFor="let item of highlights; trackBy: trackByTitle"
+        class="card"
+      >
+        <h3 class="card-title">{{ item.title }}</h3>
+        <p class="card-text">{{ item.description }}</p>
+      </article>
+    </div>
+  </div>
+</section>

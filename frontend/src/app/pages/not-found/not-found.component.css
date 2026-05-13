@@ -1,0 +1,10 @@
+/* Not found layout */
+.not-found {
+  display: flex;
+  align-items: center;
+}
+
+.not-found-content {
+  display: grid;
+  gap: 1.25rem;
+}

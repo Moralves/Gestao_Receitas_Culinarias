@@ -1,0 +1,15 @@
+/* Category placeholder styling */
+.category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.category-pill {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
