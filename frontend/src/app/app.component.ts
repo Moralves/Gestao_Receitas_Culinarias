@@ -32,8 +32,7 @@ export class AppComponent {
    */
   readonly navLinks: NavLink[] = [
     { label: 'Inicio', path: '/', exact: true },
-    { label: 'Receitas', path: '/receitas' },
-    { label: 'Categorias', path: '/categorias' }
+    { label: 'Receitas', path: '/receitas' }
   ];
 
   /**

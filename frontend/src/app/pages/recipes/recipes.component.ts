@@ -1,33 +1,24 @@
 import { AsyncPipe, NgFor, NgIf } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { combineLatest, map, startWith } from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { BehaviorSubject, catchError, combineLatest, debounceTime, distinctUntilChanged, map, of, startWith, switchMap, take } from 'rxjs';
 
-import { Category } from '../../models/category.model';
-import { Recipe } from '../../models/recipe.model';
-import { CategoriesService } from '../../services/categories.service';
+import { Recipe, recipeCategoryLabels } from '../../models/recipe.model';
 import { RecipesService } from '../../services/recipes.service';
 
-interface RecipeFilters {
-  search: string;
-  categoryId: string;
-}
-
 interface RecipeCard {
-  id: string;
-  title: string;
-  description: string;
-  categoryName: string;
-  servings: number;
-  prepTimeMinutes: number;
+  id: number;
+  nome: string;
+  categoriaLabel: string;
+  tempoPreparo: number;
 }
 
 interface RecipesViewModel {
   recipes: RecipeCard[];
-  categories: Category[];
   total: number;
-  filteredTotal: number;
+  search: string;
+  errorMessage: string;
 }
 
 /**
@@ -43,35 +34,54 @@ interface RecipesViewModel {
 })
 export class RecipesComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly categoriesService = inject(CategoriesService);
   private readonly recipesService = inject(RecipesService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly refreshSubject = new BehaviorSubject<void>(undefined);
+  private readonly successMessageSubject = new BehaviorSubject<string>('');
+  private readonly errorMessageSubject = new BehaviorSubject<string>('');
+
+  /**
+   * Success message displayed after create/delete actions.
+   */
+  readonly successMessage$ = this.successMessageSubject.asObservable();
+
+  /**
+   * Error message displayed when an action fails.
+   */
+  readonly errorMessage$ = this.errorMessageSubject.asObservable();
 
   /**
    * Filter form used to refine the list of recipes.
    */
   readonly filterForm = this.fb.nonNullable.group({
-    search: '',
-    categoryId: 'all'
+    search: ''
   });
 
   /**
    * View model for the recipes list.
    */
-  private readonly filters$ = this.filterForm.valueChanges.pipe(
-    startWith(this.filterForm.getRawValue()),
-    map((value) => ({
-      search: value.search ?? '',
-      categoryId: value.categoryId ?? 'all'
-    }))
+  private readonly search$ = this.filterForm.controls.search.valueChanges.pipe(
+    startWith(this.filterForm.controls.search.value ?? ''),
+    map((value) => value?.trim() ?? ''),
+    debounceTime(250),
+    distinctUntilChanged()
   );
 
-  readonly viewModel$ = combineLatest([
-    this.recipesService.recipes$,
-    this.categoriesService.categories$,
-    this.filters$
-  ]).pipe(
-    map(([recipes, categories, filters]) =>
-      this.toViewModel(recipes, categories, filters)
+  readonly viewModel$ = combineLatest([this.search$, this.refreshSubject]).pipe(
+    map(([search]) => search),
+    switchMap((search) =>
+      this.recipesService.list(search).pipe(
+        map((recipes) => this.toViewModel(recipes, search)),
+        catchError(() =>
+          of({
+            recipes: [],
+            total: 0,
+            search,
+            errorMessage: 'Nao foi possivel carregar as receitas.'
+          })
+        )
+      )
     )
   );
 
@@ -80,12 +90,7 @@ export class RecipesComponent {
    */
   readonly trackByRecipe = (_: number, recipe: RecipeCard) => recipe.id;
 
-  /**
-   * Track categories by id for stable rendering.
-   */
-  readonly trackByCategory = (_: number, category: Category) => category.id;
-
-  removeRecipe(id: string, title: string): void {
+  removeRecipe(id: number, title: string): void {
     const confirmed = window.confirm(
       `Remover a receita "${title}"?`
     );
@@ -93,61 +98,58 @@ export class RecipesComponent {
       return;
     }
 
-    this.recipesService.remove(id);
+    this.recipesService.remove(id).subscribe({
+      next: () => {
+        this.successMessageSubject.next('Receita removida com sucesso.');
+        this.errorMessageSubject.next('');
+        this.refreshSubject.next();
+      },
+      error: () => {
+        this.errorMessageSubject.next('Nao foi possivel remover a receita.');
+        this.successMessageSubject.next('');
+      }
+    });
   }
 
-  private toViewModel(
-    recipes: Recipe[],
-    categories: Category[],
-    filters: RecipeFilters
-  ): RecipesViewModel {
-    const categoryMap = new Map(
-      categories.map((category) => [category.id, category.name])
-    );
+  constructor() {
+    this.route.queryParamMap.pipe(take(1)).subscribe((params) => {
+      const success = params.get('sucesso');
+      if (!success) {
+        return;
+      }
 
-    const filtered = this.applyFilters(recipes, filters);
-    const cards = filtered.map((recipe) => ({
+      if (success === 'cadastrada') {
+        this.successMessageSubject.next('Receita cadastrada com sucesso.');
+        this.errorMessageSubject.next('');
+      }
+
+      if (success === 'excluida') {
+        this.successMessageSubject.next('Receita removida com sucesso.');
+        this.errorMessageSubject.next('');
+      }
+
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { sucesso: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      });
+    });
+  }
+
+  private toViewModel(recipes: Recipe[], search: string): RecipesViewModel {
+    const cards = recipes.map((recipe) => ({
       id: recipe.id,
-      title: recipe.title,
-      description: recipe.description,
-      categoryName: categoryMap.get(recipe.categoryId) ?? 'Sem categoria',
-      servings: recipe.servings,
-      prepTimeMinutes: recipe.prepTimeMinutes
+      nome: recipe.nome,
+      categoriaLabel: recipeCategoryLabels[recipe.categoria] ?? recipe.categoria,
+      tempoPreparo: recipe.tempoPreparo
     }));
 
     return {
       recipes: cards,
-      categories,
       total: recipes.length,
-      filteredTotal: cards.length
+      search,
+      errorMessage: ''
     };
-  }
-
-  private applyFilters(
-    recipes: Recipe[],
-    filters: RecipeFilters
-  ): Recipe[] {
-    const search = this.normalize(filters.search);
-    return recipes.filter((recipe) => {
-      const matchesSearch = !search
-        || this.normalize(recipe.title).includes(search)
-        || recipe.ingredients.some((item) =>
-          this.normalize(item).includes(search)
-        );
-
-      const matchesCategory =
-        filters.categoryId === 'all'
-        || recipe.categoryId === filters.categoryId;
-
-      return matchesSearch && matchesCategory;
-    });
-  }
-
-  private normalize(value: string): string {
-    return value
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .trim();
   }
 }

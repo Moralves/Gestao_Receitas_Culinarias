@@ -13,51 +13,46 @@
       </div>
     </div>
 
-    <div *ngIf="notFound" class="empty-state">
-      <h2 class="empty-title">Receita nao encontrada</h2>
-      <p class="empty-text">
-        Volte para a lista e selecione outra receita para editar.
-      </p>
-      <a class="primary-action" routerLink="/receitas">Ver receitas</a>
-    </div>
-
     <form
-      *ngIf="!notFound"
       class="card form-card"
       [formGroup]="form"
       (ngSubmit)="save()"
     >
       <div class="form-grid">
         <div class="form-group">
-          <label class="form-label" for="title">Titulo</label>
+          <label class="form-label" for="nome">Nome</label>
           <input
-            id="title"
+            id="nome"
             class="input"
-            formControlName="title"
+            formControlName="nome"
             placeholder="Ex: Bolo de cenoura"
           />
-          <p class="form-error" *ngIf="form.controls.title.touched && form.controls.title.invalid">
-            Informe um titulo valido.
+          <p
+            class="form-error form-error-space"
+            [class.is-visible]="form.controls.nome.touched && form.controls.nome.invalid"
+            [attr.aria-hidden]="!(form.controls.nome.touched && form.controls.nome.invalid)"
+          >
+            Informe um nome com pelo menos 3 caracteres.
           </p>
         </div>
 
         <div class="form-group">
           <label class="form-label" for="category">Categoria</label>
-          <select id="category" class="select" formControlName="categoryId">
+          <select id="category" class="select" formControlName="categoria">
             <option value="">Selecione uma categoria</option>
             <option
-              *ngFor="let category of (categories$ | async) ?? []; trackBy: trackByCategory"
-              [value]="category.id"
+              *ngFor="let category of categories; trackBy: trackByCategory"
+              [value]="category.value"
             >
-              {{ category.name }}
+              {{ category.label }}
             </option>
           </select>
-          <p class="form-error" *ngIf="form.controls.categoryId.touched && form.controls.categoryId.invalid">
+          <p
+            class="form-error form-error-space"
+            [class.is-visible]="form.controls.categoria.touched && form.controls.categoria.invalid"
+            [attr.aria-hidden]="!(form.controls.categoria.touched && form.controls.categoria.invalid)"
+          >
             Selecione uma categoria.
-          </p>
-          <p class="form-hint" *ngIf="(categories$ | async)?.length === 0">
-            Nenhuma categoria encontrada. Crie uma em
-            <a routerLink="/categorias">Categorias</a>.
           </p>
         </div>
 
@@ -68,11 +63,14 @@
             class="input"
             type="number"
             min="1"
-            max="30"
-            formControlName="servings"
+            formControlName="porcoes"
           />
-          <p class="form-error" *ngIf="form.controls.servings.touched && form.controls.servings.invalid">
-            Informe um valor entre 1 e 30.
+          <p
+            class="form-error form-error-space"
+            [class.is-visible]="form.controls.porcoes.touched && form.controls.porcoes.invalid"
+            [attr.aria-hidden]="!(form.controls.porcoes.touched && form.controls.porcoes.invalid)"
+          >
+            Informe um numero de porcoes valido.
           </p>
         </div>
 
@@ -82,27 +80,17 @@
             id="prepTime"
             class="input"
             type="number"
-            min="5"
-            max="600"
-            formControlName="prepTimeMinutes"
+            min="1"
+            formControlName="tempoPreparo"
           />
-          <p class="form-error" *ngIf="form.controls.prepTimeMinutes.touched && form.controls.prepTimeMinutes.invalid">
-            Informe um tempo entre 5 e 600 minutos.
+          <p
+            class="form-error form-error-space"
+            [class.is-visible]="form.controls.tempoPreparo.touched && form.controls.tempoPreparo.invalid"
+            [attr.aria-hidden]="!(form.controls.tempoPreparo.touched && form.controls.tempoPreparo.invalid)"
+          >
+            Informe o tempo de preparo em minutos.
           </p>
         </div>
-      </div>
-
-      <div class="form-group form-section">
-        <label class="form-label" for="description">Descricao</label>
-        <textarea
-          id="description"
-          class="textarea"
-          formControlName="description"
-          placeholder="Resumo rapido da receita"
-        ></textarea>
-        <p class="form-error" *ngIf="form.controls.description.touched && form.controls.description.invalid">
-          Informe uma descricao objetiva.
-        </p>
       </div>
 
       <div class="form-section">
@@ -112,7 +100,7 @@
             Adicionar
           </button>
         </div>
-        <div class="form-list" formArrayName="ingredients">
+        <div class="form-list" formArrayName="ingredientes">
           <div
             class="form-list-item"
             *ngFor="let item of ingredients.controls; let i = index; trackBy: trackByIndex"
@@ -132,41 +120,43 @@
             </button>
           </div>
         </div>
+        <p
+          class="form-error form-error-space"
+          [class.is-visible]="ingredients.touched && ingredients.invalid"
+          [attr.aria-hidden]="!(ingredients.touched && ingredients.invalid)"
+        >
+          Informe pelo menos um ingrediente valido.
+        </p>
         <p class="form-hint">Mantenha cada ingrediente em uma linha.</p>
       </div>
 
-      <div class="form-section">
-        <div class="form-section-header">
-          <h2 class="section-title">Modo de preparo</h2>
-          <button class="ghost-button" type="button" (click)="addStep()">
-            Adicionar
-          </button>
-        </div>
-        <div class="form-list" formArrayName="steps">
-          <div
-            class="form-list-item"
-            *ngFor="let item of steps.controls; let i = index; trackBy: trackByIndex"
-          >
-            <input
-              class="input"
-              [formControlName]="i"
-              placeholder="Ex: Misture os ingredientes secos"
-            />
-            <button
-              class="icon-button"
-              type="button"
-              (click)="removeStep(i)"
-              [disabled]="steps.length === 1"
-            >
-              Remover
-            </button>
-          </div>
-        </div>
-        <p class="form-hint">Escreva cada etapa separadamente.</p>
+      <div class="form-group form-section">
+        <label class="form-label" for="modoPreparo">Modo de preparo</label>
+        <textarea
+          id="modoPreparo"
+          class="textarea"
+          formControlName="modoPreparo"
+          placeholder="Descreva o passo a passo completo da receita"
+        ></textarea>
+        <p
+          class="form-error form-error-space"
+          [class.is-visible]="form.controls.modoPreparo.touched && form.controls.modoPreparo.invalid"
+          [attr.aria-hidden]="!(form.controls.modoPreparo.touched && form.controls.modoPreparo.invalid)"
+        >
+          O modo de preparo precisa ter pelo menos 10 caracteres.
+        </p>
       </div>
 
+      <p class="form-error" *ngIf="submitError">{{ submitError }}</p>
+
       <div class="form-actions">
-        <button class="primary-action" type="submit">{{ submitLabel }}</button>
+        <button
+          class="primary-action"
+          type="submit"
+          [disabled]="form.invalid || saving"
+        >
+          {{ submitLabel }}
+        </button>
         <a class="secondary-action" routerLink="/receitas">Cancelar</a>
       </div>
     </form>

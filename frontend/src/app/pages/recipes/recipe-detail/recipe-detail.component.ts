@@ -1,16 +1,15 @@
-import { AsyncPipe, NgFor, NgIf } from '@angular/common';
+import { AsyncPipe, DatePipe, NgFor, NgIf } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest, map } from 'rxjs';
+import { catchError, map, of } from 'rxjs';
 
-import { Category } from '../../../models/category.model';
-import { Recipe } from '../../../models/recipe.model';
-import { CategoriesService } from '../../../services/categories.service';
+import { Recipe, recipeCategoryLabels } from '../../../models/recipe.model';
 import { RecipesService } from '../../../services/recipes.service';
 
 interface RecipeDetailViewModel {
   recipe: Recipe | null;
-  categoryName: string;
+  categoryLabel: string;
+  errorMessage: string;
 }
 
 /**
@@ -19,7 +18,7 @@ interface RecipeDetailViewModel {
 @Component({
   selector: 'app-recipe-detail',
   standalone: true,
-  imports: [AsyncPipe, NgFor, NgIf, RouterLink],
+  imports: [AsyncPipe, DatePipe, NgFor, NgIf, RouterLink],
   templateUrl: './recipe-detail.component.html',
   styleUrl: './recipe-detail.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -28,21 +27,30 @@ export class RecipeDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly recipesService = inject(RecipesService);
-  private readonly categoriesService = inject(CategoriesService);
 
-  private readonly recipeId = this.route.snapshot.paramMap.get('id');
+  private readonly recipeId = Number(this.route.snapshot.paramMap.get('id'));
 
   /**
    * View model for the detail screen.
    */
-  readonly viewModel$ = combineLatest([
-    this.recipesService.recipes$,
-    this.categoriesService.categories$
-  ]).pipe(
-    map(([recipes, categories]) =>
-      this.buildViewModel(recipes, categories)
+  readonly viewModel$ = this.recipeId
+    ? this.recipesService.getById(this.recipeId).pipe(
+      map((recipe) => this.buildViewModel(recipe)),
+      catchError((error) =>
+        of({
+          recipe: null,
+          categoryLabel: '',
+          errorMessage: error?.status === 404
+            ? 'Receita nao encontrada.'
+            : 'Nao foi possivel carregar a receita.'
+        })
+      )
     )
-  );
+    : of({
+      recipe: null,
+      categoryLabel: '',
+      errorMessage: 'Receita nao encontrada.'
+    });
 
   /**
    * Track list entries by index.
@@ -51,33 +59,28 @@ export class RecipeDetailComponent {
 
   removeRecipe(recipe: Recipe): void {
     const confirmed = window.confirm(
-      `Remover a receita "${recipe.title}"?`
+      `Remover a receita "${recipe.nome}"?`
     );
     if (!confirmed) {
       return;
     }
 
-    this.recipesService.remove(recipe.id);
-    this.router.navigate(['/receitas']);
+    this.recipesService.remove(recipe.id).subscribe({
+      next: () => {
+        this.router.navigate(['/receitas'], {
+          queryParams: { sucesso: 'excluida' }
+        });
+      }
+    });
   }
 
   private buildViewModel(
-    recipes: Recipe[],
-    categories: Category[]
+    recipe: Recipe
   ): RecipeDetailViewModel {
-    if (!this.recipeId) {
-      return { recipe: null, categoryName: '' };
-    }
-
-    const recipe = recipes.find((item) => item.id === this.recipeId) ?? null;
-    if (!recipe) {
-      return { recipe: null, categoryName: '' };
-    }
-
-    const categoryName =
-      categories.find((category) => category.id === recipe.categoryId)?.name
-      ?? 'Sem categoria';
-
-    return { recipe, categoryName };
+    return {
+      recipe,
+      categoryLabel: recipeCategoryLabels[recipe.categoria] ?? recipe.categoria,
+      errorMessage: ''
+    };
   }
 }

@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 
-import { CategoriesComponent } from './pages/categories/categories.component';
 import { HomeComponent } from './pages/home/home.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { RecipeDetailComponent } from './pages/recipes/recipe-detail/recipe-detail.component';
@@ -27,19 +26,9 @@ export const routes: Routes = [
     title: 'Gestao de Receitas | Nova receita'
   },
   {
-    path: 'receitas/:id/editar',
-    component: RecipeFormComponent,
-    title: 'Gestao de Receitas | Editar receita'
-  },
-  {
     path: 'receitas/:id',
     component: RecipeDetailComponent,
     title: 'Gestao de Receitas | Detalhe da receita'
-  },
-  {
-    path: 'categorias',
-    component: CategoriesComponent,
-    title: 'Gestao de Receitas | Categorias'
   },
   {
     path: '**',

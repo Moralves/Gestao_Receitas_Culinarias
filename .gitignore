@@ -22,6 +22,10 @@ build/
 *.tsbuildinfo
 *.tgz
 
+# Java / Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+
 # Environment / secrets
 .env
 .env.*
@@ -34,11 +38,25 @@ build/
 !.vscode/launch.json
 .idea/
 .history/
+*.iws
+*.iml
+*.ipr
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+.apt_generated
+
+# NetBeans
+nbproject/private/
+nbbuild/
+nbdist/
+.nb-gradle/
 
 # OS files
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Local planning docs
-documento.md

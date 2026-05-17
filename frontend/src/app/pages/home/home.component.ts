@@ -31,11 +31,11 @@ export class HomeComponent {
     },
     {
       title: 'Organizacao clara',
-      description: 'Estruture receitas por categoria e mantenha tudo acessivel.'
+      description: 'Visualize receitas por categoria e tempo de preparo.'
     },
     {
       title: 'Busca rapida',
-      description: 'Encontre receitas por nome ou ingrediente em segundos.'
+      description: 'Encontre receitas por nome em tempo real.'
     }
   ];
 

@@ -1,6 +1,6 @@
 # Frontend - Gestao de Receitas Culinarias
 
-Frontend desenvolvido para a disciplina com foco em clareza, organizacao e evolucao incremental. O backend sera feito em **Java + Spring Boot** (somente referencia), e este projeto esta preparado para consumir APIs REST.
+Frontend desenvolvido para a disciplina com foco em clareza, organizacao e evolucao incremental. O projeto consome uma API REST em **Java + Spring Boot** rodando na porta 8080.
 
 ## Stack e tecnologias
 
@@ -12,15 +12,14 @@ Frontend desenvolvido para a disciplina com foco em clareza, organizacao e evolu
 | Reatividade | RxJS 7.8 | Integracao com streams e HTTP |
 | Build | Angular CLI | Scripts padronizados de build e serve |
 
-## Funcionalidades (planejadas)
+## Funcionalidades
 
 | Funcionalidade | Descricao |
 | --- | --- |
-| Cadastro de receitas | Criar, editar e remover receitas |
-| Listagem de receitas | Visao em cards com filtros |
+| Cadastro de receitas | Criar receitas com validacoes obrigatorias |
+| Listagem de receitas | Visao em cards com busca por nome |
 | Detalhe da receita | Ingredientes, modo de preparo e categoria |
-| Categorias | Organizacao e navegacao por tema |
-| Busca e filtros | Pesquisa por nome e ingredientes |
+| Exclusao de receitas | Remocao com confirmacao |
 
 ## Scripts uteis
 

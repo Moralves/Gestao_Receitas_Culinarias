@@ -1,28 +1,27 @@
-import { AsyncPipe, NgFor, NgIf } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import {
+  AbstractControl,
   FormArray,
   FormBuilder,
   FormControl,
   ReactiveFormsModule,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { take } from 'rxjs';
+import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 
-import { Category } from '../../../models/category.model';
-import { RecipeInput } from '../../../models/recipe.model';
-import { CategoriesService } from '../../../services/categories.service';
+import { RecipeInput, RecipeCategory, recipeCategoryOptions } from '../../../models/recipe.model';
 import { RecipesService } from '../../../services/recipes.service';
 
 interface RecipeFormValue {
-  title: string;
-  description: string;
-  categoryId: string;
-  servings: number;
-  prepTimeMinutes: number;
-  ingredients: string[];
-  steps: string[];
+  nome: string;
+  categoria: RecipeCategory | '';
+  tempoPreparo: number;
+  porcoes: number;
+  ingredientes: string[];
+  modoPreparo: string;
 }
 
 /**
@@ -31,58 +30,43 @@ interface RecipeFormValue {
 @Component({
   selector: 'app-recipe-form',
   standalone: true,
-  imports: [AsyncPipe, NgFor, NgIf, ReactiveFormsModule, RouterLink],
+  imports: [NgFor, NgIf, ReactiveFormsModule, RouterLink],
   templateUrl: './recipe-form.component.html',
   styleUrl: './recipe-form.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RecipeFormComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly recipesService = inject(RecipesService);
-  private readonly categoriesService = inject(CategoriesService);
 
-  readonly categories$ = this.categoriesService.categories$;
-  readonly recipeId = this.route.snapshot.paramMap.get('id');
-  readonly isEditMode = Boolean(this.recipeId);
-  readonly pageTitle = this.isEditMode ? 'Editar receita' : 'Nova receita';
-  readonly submitLabel = this.isEditMode ? 'Salvar alteracoes' : 'Cadastrar receita';
+  readonly categories = recipeCategoryOptions;
+  readonly pageTitle = 'Nova receita';
+  readonly submitLabel = 'Salvar receita';
 
-  notFound = false;
+  submitError = '';
+  saving = false;
 
   /**
    * Main reactive form for recipes.
    */
   readonly form = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.maxLength(80)]],
-    description: ['', [Validators.required, Validators.maxLength(220)]],
-    categoryId: ['', Validators.required],
-    servings: [2, [Validators.required, Validators.min(1), Validators.max(30)]],
-    prepTimeMinutes: [
-      30,
-      [Validators.required, Validators.min(5), Validators.max(600)]
-    ],
-    ingredients: this.fb.nonNullable.array([this.createLineControl()]),
-    steps: this.fb.nonNullable.array([this.createLineControl()])
+    nome: ['', [Validators.required, Validators.minLength(3)]],
+    categoria: ['', Validators.required],
+    tempoPreparo: [30, [Validators.required, Validators.min(1)]],
+    porcoes: [2, [Validators.required, Validators.min(1)]],
+    ingredientes: this.fb.nonNullable.array(
+      [this.createLineControl()],
+      { validators: [this.atLeastOneLineValidator()] }
+    ),
+    modoPreparo: ['', [Validators.required, Validators.minLength(10)]]
   });
-
-  constructor() {
-    this.hydrateForm();
-  }
 
   /**
    * Shortcut for ingredients form array.
    */
   get ingredients(): FormArray<FormControl<string>> {
-    return this.form.controls.ingredients as FormArray<FormControl<string>>;
-  }
-
-  /**
-   * Shortcut for steps form array.
-   */
-  get steps(): FormArray<FormControl<string>> {
-    return this.form.controls.steps as FormArray<FormControl<string>>;
+    return this.form.controls.ingredientes as FormArray<FormControl<string>>;
   }
 
   /**
@@ -93,7 +77,7 @@ export class RecipeFormComponent {
   /**
    * Track categories by id for stable rendering.
    */
-  readonly trackByCategory = (_: number, category: Category) => category.id;
+  readonly trackByCategory = (_: number, category: { value: string }) => category.value;
 
   addIngredient(): void {
     this.ingredients.push(this.createLineControl());
@@ -106,90 +90,45 @@ export class RecipeFormComponent {
     this.ingredients.removeAt(index);
   }
 
-  addStep(): void {
-    this.steps.push(this.createLineControl());
-  }
-
-  removeStep(index: number): void {
-    if (this.steps.length <= 1) {
-      return;
-    }
-    this.steps.removeAt(index);
-  }
-
   save(): void {
+    this.submitError = '';
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
     const value = this.form.getRawValue() as RecipeFormValue;
+    const ingredientes = this.cleanList(value.ingredientes);
+    if (ingredientes.length === 0) {
+      this.ingredients.setErrors({ required: true });
+      this.form.markAllAsTouched();
+      return;
+    }
+
     const payload: RecipeInput = {
-      title: value.title,
-      description: value.description,
-      categoryId: value.categoryId,
-      servings: value.servings,
-      prepTimeMinutes: value.prepTimeMinutes,
-      ingredients: this.cleanList(value.ingredients),
-      steps: this.cleanList(value.steps)
+      nome: value.nome.trim(),
+      categoria: value.categoria as RecipeCategory,
+      tempoPreparo: value.tempoPreparo,
+      porcoes: value.porcoes,
+      ingredientes,
+      modoPreparo: value.modoPreparo.trim()
     };
 
-    if (this.recipeId) {
-      this.recipesService.update(this.recipeId, payload);
-      this.router.navigate(['/receitas', this.recipeId]);
-      return;
-    }
-
-    const created = this.recipesService.create(payload);
-    this.router.navigate(['/receitas', created.id]);
-  }
-
-  private hydrateForm(): void {
-    if (this.recipeId) {
-      const recipe = this.recipesService.getById(this.recipeId);
-      if (!recipe) {
-        this.notFound = true;
-        return;
-      }
-
-      this.form.patchValue({
-        title: recipe.title,
-        description: recipe.description,
-        categoryId: recipe.categoryId,
-        servings: recipe.servings,
-        prepTimeMinutes: recipe.prepTimeMinutes
+    this.saving = true;
+    this.recipesService.create(payload)
+      .pipe(finalize(() => { this.saving = false; }))
+      .subscribe({
+        next: () => {
+          this.router.navigate(['/receitas'], {
+            queryParams: { sucesso: 'cadastrada' }
+          });
+        },
+        error: (error) => {
+          this.submitError = error?.status === 409
+            ? 'Ja existe uma receita com esse nome.'
+            : 'Nao foi possivel cadastrar a receita.';
+        }
       });
-
-      this.replaceArrayValues(this.ingredients, recipe.ingredients);
-      this.replaceArrayValues(this.steps, recipe.steps);
-      return;
-    }
-
-    this.categoriesService.categories$
-      .pipe(take(1))
-      .subscribe((categories) => this.setDefaultCategory(categories));
-  }
-
-  private setDefaultCategory(categories: Category[]): void {
-    if (!categories.length) {
-      return;
-    }
-
-    if (!this.form.controls.categoryId.value) {
-      this.form.controls.categoryId.setValue(categories[0].id);
-    }
-  }
-
-  private replaceArrayValues(formArray: FormArray, values: string[]): void {
-    formArray.clear();
-    values.forEach((item) => {
-      const control = this.createLineControl();
-      control.setValue(item);
-      formArray.push(control);
-    });
-    if (formArray.length === 0) {
-      formArray.push(this.createLineControl());
-    }
   }
 
   private createLineControl(): FormControl<string> {
@@ -197,6 +136,16 @@ export class RecipeFormComponent {
       Validators.required,
       Validators.maxLength(120)
     ]);
+  }
+
+  private atLeastOneLineValidator(): ValidatorFn {
+    return (control: AbstractControl) => {
+      const formArray = control as FormArray<FormControl<string>>;
+      const hasValue = formArray.controls.some((item) =>
+        item.value.trim().length > 0
+      );
+      return hasValue ? null : { required: true };
+    };
   }
 
   private cleanList(values: string[]): string[] {

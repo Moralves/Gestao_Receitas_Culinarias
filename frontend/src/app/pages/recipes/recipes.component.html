@@ -5,18 +5,24 @@
       <div>
         <h1 class="page-title">Receitas</h1>
         <p class="page-subtitle">
-          Gerencie receitas com foco em organizacao, tempo de preparo e
-          experiencia do usuario.
+          Catalogo culinario com foco em organizacao e rapidez na busca.
         </p>
       </div>
       <div class="page-actions">
         <span class="badge">
-          {{ vm.filteredTotal }} / {{ vm.total }} receitas
+          {{ vm.total }} receitas
         </span>
         <a class="primary-action" routerLink="/receitas/nova">
           Nova receita
         </a>
       </div>
+    </div>
+
+    <div class="alert alert-success" *ngIf="successMessage$ | async as successMessage">
+      {{ successMessage }}
+    </div>
+    <div class="alert alert-error" *ngIf="errorMessage$ | async as errorMessage">
+      {{ errorMessage }}
     </div>
 
     <div class="filter-card">
@@ -27,37 +33,27 @@
             id="search"
             class="input"
             formControlName="search"
-            placeholder="Nome ou ingrediente"
+            placeholder="Digite o nome da receita"
           />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="category">Categoria</label>
-          <select id="category" class="select" formControlName="categoryId">
-            <option value="all">Todas as categorias</option>
-            <option
-              *ngFor="let category of vm.categories; trackBy: trackByCategory"
-              [value]="category.id"
-            >
-              {{ category.name }}
-            </option>
-          </select>
         </div>
       </form>
     </div>
 
-    <section class="recipes-grid" *ngIf="vm.filteredTotal > 0; else emptyState">
+    <div class="alert alert-error" *ngIf="vm.errorMessage">
+      {{ vm.errorMessage }}
+    </div>
+
+    <section class="recipes-grid" *ngIf="!vm.errorMessage && vm.total > 0; else emptyState">
       <article
         *ngFor="let recipe of vm.recipes; trackBy: trackByRecipe"
         class="recipe-card"
       >
         <div class="recipe-card-header">
-          <h2 class="recipe-card-title">{{ recipe.title }}</h2>
-          <span class="badge">{{ recipe.categoryName }}</span>
+          <h2 class="recipe-card-title">{{ recipe.nome }}</h2>
+          <span class="badge">{{ recipe.categoriaLabel }}</span>
         </div>
-        <p class="recipe-card-text">{{ recipe.description }}</p>
         <div class="recipe-meta">
-          <span>{{ recipe.prepTimeMinutes }} min</span>
-          <span>{{ recipe.servings }} porcoes</span>
+          <span>{{ recipe.tempoPreparo }} min</span>
         </div>
         <div class="recipe-actions">
           <a
@@ -66,16 +62,10 @@
           >
             Ver
           </a>
-          <a
-            class="ghost-button"
-            [routerLink]="['/receitas', recipe.id, 'editar']"
-          >
-            Editar
-          </a>
           <button
             type="button"
             class="icon-button"
-            (click)="removeRecipe(recipe.id, recipe.title)"
+            (click)="removeRecipe(recipe.id, recipe.nome)"
           >
             Excluir
           </button>
@@ -84,15 +74,25 @@
     </section>
 
     <ng-template #emptyState>
-      <div class="empty-state">
-        <h2 class="empty-title">Nenhuma receita encontrada</h2>
+      <div class="empty-state" *ngIf="!vm.errorMessage; else errorState">
+        <h2 class="empty-title">
+          {{ vm.search ? 'Nenhuma receita encontrada' : 'Nenhuma receita cadastrada' }}
+        </h2>
         <p class="empty-text">
-          Crie a primeira receita para iniciar seu catalogo.
+          {{ vm.search ? 'Tente ajustar o termo da busca.' : 'Crie a primeira receita para iniciar seu catalogo.' }}
         </p>
         <a class="primary-action" routerLink="/receitas/nova">
           Cadastrar receita
         </a>
       </div>
+      <ng-template #errorState>
+        <div class="empty-state">
+          <h2 class="empty-title">Nao foi possivel carregar as receitas</h2>
+          <p class="empty-text">
+            Verifique se o backend esta em execucao e tente novamente.
+          </p>
+        </div>
+      </ng-template>
     </ng-template>
   </div>
 </section>
