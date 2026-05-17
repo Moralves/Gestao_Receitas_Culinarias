@@ -1,0 +1,25 @@
+/* Recipe detail layout */
+.detail-grid {
+  margin-top: 2rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.detail-summary {
+  display: grid;
+  gap: 1rem;
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.detail-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--color-text);
+  display: grid;
+  gap: 0.5rem;
+}

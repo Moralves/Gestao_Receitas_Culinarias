@@ -1,0 +1,174 @@
+<!-- Recipe form -->
+<section class="page">
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">{{ pageTitle }}</h1>
+        <p class="page-subtitle">
+          Preencha os campos com clareza para facilitar o uso e a leitura.
+        </p>
+      </div>
+      <div class="page-actions">
+        <a class="secondary-action" routerLink="/receitas">Voltar</a>
+      </div>
+    </div>
+
+    <div *ngIf="notFound" class="empty-state">
+      <h2 class="empty-title">Receita nao encontrada</h2>
+      <p class="empty-text">
+        Volte para a lista e selecione outra receita para editar.
+      </p>
+      <a class="primary-action" routerLink="/receitas">Ver receitas</a>
+    </div>
+
+    <form
+      *ngIf="!notFound"
+      class="card form-card"
+      [formGroup]="form"
+      (ngSubmit)="save()"
+    >
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" for="title">Titulo</label>
+          <input
+            id="title"
+            class="input"
+            formControlName="title"
+            placeholder="Ex: Bolo de cenoura"
+          />
+          <p class="form-error" *ngIf="form.controls.title.touched && form.controls.title.invalid">
+            Informe um titulo valido.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="category">Categoria</label>
+          <select id="category" class="select" formControlName="categoryId">
+            <option value="">Selecione uma categoria</option>
+            <option
+              *ngFor="let category of (categories$ | async) ?? []; trackBy: trackByCategory"
+              [value]="category.id"
+            >
+              {{ category.name }}
+            </option>
+          </select>
+          <p class="form-error" *ngIf="form.controls.categoryId.touched && form.controls.categoryId.invalid">
+            Selecione uma categoria.
+          </p>
+          <p class="form-hint" *ngIf="(categories$ | async)?.length === 0">
+            Nenhuma categoria encontrada. Crie uma em
+            <a routerLink="/categorias">Categorias</a>.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="servings">Porcoes</label>
+          <input
+            id="servings"
+            class="input"
+            type="number"
+            min="1"
+            max="30"
+            formControlName="servings"
+          />
+          <p class="form-error" *ngIf="form.controls.servings.touched && form.controls.servings.invalid">
+            Informe um valor entre 1 e 30.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="prepTime">Tempo (min)</label>
+          <input
+            id="prepTime"
+            class="input"
+            type="number"
+            min="5"
+            max="600"
+            formControlName="prepTimeMinutes"
+          />
+          <p class="form-error" *ngIf="form.controls.prepTimeMinutes.touched && form.controls.prepTimeMinutes.invalid">
+            Informe um tempo entre 5 e 600 minutos.
+          </p>
+        </div>
+      </div>
+
+      <div class="form-group form-section">
+        <label class="form-label" for="description">Descricao</label>
+        <textarea
+          id="description"
+          class="textarea"
+          formControlName="description"
+          placeholder="Resumo rapido da receita"
+        ></textarea>
+        <p class="form-error" *ngIf="form.controls.description.touched && form.controls.description.invalid">
+          Informe uma descricao objetiva.
+        </p>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-header">
+          <h2 class="section-title">Ingredientes</h2>
+          <button class="ghost-button" type="button" (click)="addIngredient()">
+            Adicionar
+          </button>
+        </div>
+        <div class="form-list" formArrayName="ingredients">
+          <div
+            class="form-list-item"
+            *ngFor="let item of ingredients.controls; let i = index; trackBy: trackByIndex"
+          >
+            <input
+              class="input"
+              [formControlName]="i"
+              placeholder="Ex: 2 xicaras de farinha"
+            />
+            <button
+              class="icon-button"
+              type="button"
+              (click)="removeIngredient(i)"
+              [disabled]="ingredients.length === 1"
+            >
+              Remover
+            </button>
+          </div>
+        </div>
+        <p class="form-hint">Mantenha cada ingrediente em uma linha.</p>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-header">
+          <h2 class="section-title">Modo de preparo</h2>
+          <button class="ghost-button" type="button" (click)="addStep()">
+            Adicionar
+          </button>
+        </div>
+        <div class="form-list" formArrayName="steps">
+          <div
+            class="form-list-item"
+            *ngFor="let item of steps.controls; let i = index; trackBy: trackByIndex"
+          >
+            <input
+              class="input"
+              [formControlName]="i"
+              placeholder="Ex: Misture os ingredientes secos"
+            />
+            <button
+              class="icon-button"
+              type="button"
+              (click)="removeStep(i)"
+              [disabled]="steps.length === 1"
+            >
+              Remover
+            </button>
+          </div>
+        </div>
+        <p class="form-hint">Escreva cada etapa separadamente.</p>
+      </div>
+
+      <div class="form-actions">
+        <button class="primary-action" type="submit">{{ submitLabel }}</button>
+        <a class="secondary-action" routerLink="/receitas">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</section>

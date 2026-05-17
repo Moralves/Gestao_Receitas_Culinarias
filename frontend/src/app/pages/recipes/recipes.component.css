@@ -1,11 +1,55 @@
-/* Placeholder styling for recipes page */
-.placeholder-card {
+/* Recipes list layout */
+.recipes-grid {
   margin-top: 2rem;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
-.placeholder-list {
+.recipe-card {
+  padding: 1.5rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  gap: 0.9rem;
+}
+
+.recipe-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.recipe-card-title {
   margin: 0;
-  padding-left: 1.2rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.recipe-card-text {
+  margin: 0;
   color: var(--color-text-muted);
-  line-height: 1.7;
+}
+
+.recipe-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.recipe-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+@media (max-width: 600px) {
+  .recipe-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

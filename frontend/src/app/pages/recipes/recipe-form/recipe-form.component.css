@@ -1,0 +1,15 @@
+/* Recipe form layout */
+.form-card {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.form-section .form-list-item {
+  grid-template-columns: 1fr auto;
+}
+
+@media (max-width: 600px) {
+  .form-list-item {
+    grid-template-columns: 1fr;
+  }
+}

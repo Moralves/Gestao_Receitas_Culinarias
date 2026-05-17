@@ -1,0 +1,64 @@
+<!-- Recipe detail -->
+<section class="page">
+  <div class="container" *ngIf="viewModel$ | async as vm">
+    <ng-container *ngIf="vm.recipe as recipe; else notFound">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">{{ recipe.title }}</h1>
+          <p class="page-subtitle">{{ recipe.description }}</p>
+        </div>
+        <div class="page-actions">
+          <a class="secondary-action" routerLink="/receitas">Voltar</a>
+          <a
+            class="ghost-button"
+            [routerLink]="['/receitas', recipe.id, 'editar']"
+          >
+            Editar
+          </a>
+          <button class="icon-button" type="button" (click)="removeRecipe(recipe)">
+            Excluir
+          </button>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="card detail-summary">
+          <h2 class="section-title">Resumo</h2>
+          <div class="detail-meta">
+            <span class="badge">Categoria: {{ vm.categoryName }}</span>
+            <span class="badge">Tempo: {{ recipe.prepTimeMinutes }} min</span>
+            <span class="badge">Porcoes: {{ recipe.servings }}</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Ingredientes</h2>
+          <ul class="detail-list">
+            <li *ngFor="let item of recipe.ingredients; trackBy: trackByIndex">
+              {{ item }}
+            </li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Modo de preparo</h2>
+          <ol class="detail-list">
+            <li *ngFor="let step of recipe.steps; trackBy: trackByIndex">
+              {{ step }}
+            </li>
+          </ol>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #notFound>
+      <div class="empty-state">
+        <h2 class="empty-title">Receita nao encontrada</h2>
+        <p class="empty-text">
+          Volte para a lista e selecione outra receita.
+        </p>
+        <a class="primary-action" routerLink="/receitas">Ver receitas</a>
+      </div>
+    </ng-template>
+  </div>
+</section>

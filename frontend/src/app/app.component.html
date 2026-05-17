@@ -8,16 +8,22 @@
         <span class="app-brand-subtitle">Culinarias</span>
       </div>
 
-      <nav class="app-nav" aria-label="Navegacao principal">
-        <a
-          *ngFor="let link of navLinks; trackBy: trackByPath"
-          [routerLink]="link.path"
-          routerLinkActive="is-active"
-          [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
-        >
-          {{ link.label }}
+      <div class="app-header-actions">
+        <nav class="app-nav" aria-label="Navegacao principal">
+          <a
+            *ngFor="let link of navLinks; trackBy: trackByPath"
+            [routerLink]="link.path"
+            routerLinkActive="is-active"
+            [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+          >
+            {{ link.label }}
+          </a>
+        </nav>
+
+        <a class="primary-action button-sm" routerLink="/receitas/nova">
+          Nova receita
         </a>
-      </nav>
+      </div>
     </div>
   </header>
 

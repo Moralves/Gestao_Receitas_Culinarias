@@ -46,6 +46,13 @@
   font-weight: 500;
 }
 
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .app-nav a {
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
